@@ -1,5 +1,6 @@
 import os
 import threading
+import datetime
 
 from fastapi import FastAPI
 
@@ -53,10 +54,10 @@ def github_webhook(payload: dict):
         repo_data = git_rep_data[repo_name]
         print("Deploying " + repo_name)
         with open("log.txt", "a+") as f:
-            f.write("Deploying " + repo_name)
+            f.write(f"Deploying {repo_name} {datetime.datetime.now()}\n")
         threading.Thread(target=deploy_repo, args=(repo_data,)).start()
     else:
         print(f"Repo {repo_name} not found")
         with open("log.txt", "a+") as f:
-            f.write(f"Repo {repo_name} not found")
+            f.write(f"Repo {repo_name} not found {datetime.datetime.now()}\n")
     return {"response": True}
