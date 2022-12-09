@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+import json
 
 app = FastAPI()
 
@@ -10,5 +11,6 @@ def read_root():
 
 @app.post("/github/")
 def github_webhook(payload: dict):
-    print(payload)
+    json_string = json.dumps(payload)
+    print(json_string)
     return {"message": "Hello World"}
