@@ -39,8 +39,8 @@ def deploy_django(website: Website):
         with open(service_path, 'w+') as f:
             f.write(service_content)
         os.system(f'sudo systemctl daemon-reload')
-        os.system(f'sudo systemctl enable {website.name}')
         os.system(f'sudo systemctl start {website.name}')
+        os.system(f'sudo systemctl enable {website.name}')
 
         if os.path.exists(nginx_path):
             os.system(f'sudo systemctl restart nginx')
