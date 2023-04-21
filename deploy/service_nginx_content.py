@@ -19,7 +19,7 @@ Requires={website.name}.service
 
 [Service]
 Type=simple
-User={os.getlogin()}{env_text}
+User={os.path.expanduser('~').split('/')[-1]}{env_text}
 WorkingDirectory={os.path.join(home_path, 'projects', website.name)}
 ExecStart={daphne_path} -u {socket_path} {website.name}.asgi:application
 
