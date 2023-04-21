@@ -70,6 +70,7 @@ def deploy(request):
             project_path = os.path.join(project_root, website.name)
             if not os.path.exists(project_path):
                 os.system(f'cd {project_root} && git clone git@github.com-{website.name}:{git_url.split("github.com/")[1]}')
+                #  ToDo: Rename the folder to website.name
             else:
                 os.system(f'cd {project_path} && git pull git@github.com-{website.name}:{git_url.split("github.com/")[1]}')
 

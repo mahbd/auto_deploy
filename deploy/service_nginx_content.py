@@ -10,7 +10,7 @@ def django_service_content(website: Website):
 
     home_path = os.path.expanduser('~')
     project_path = os.path.join(home_path, 'projects', website.name)
-    socket_path = os.path.join(project_path, 'run', f'{website.name}.sock')
+    socket_path = os.path.join(home_path, 'run', f'{website.name}.sock')
     daphne_path = os.path.join(project_path, 'venv', 'bin', 'daphne')
     return f'''[Unit]
 Description={website.name} daphne service
@@ -31,7 +31,7 @@ WantedBy=multi-user.target
 def django_nginx_content(website: Website):
     home_path = os.path.expanduser('~')
     project_path = os.path.join(home_path, 'projects', website.name)
-    socket_path = os.path.join(project_path, 'run', f'{website.name}.sock')
+    socket_path = os.path.join(home_path, 'run', f'{website.name}.sock')
 
     return f'''server {{
         listen 80;
