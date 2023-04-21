@@ -74,12 +74,17 @@ def deploy(request):
             project_root = os.path.join(os.path.expanduser("~"), "projects")
             project_path = os.path.join(project_root, website.name)
             if not os.path.exists(project_path):
-                os.system(
-                    f'cd {project_root} && git clone git@github.com-{website.name}:{git_url.split("github.com/")[1]}')
-                #  ToDo: Rename the folder to website.name
+                command = f'cd {project_root} && git clone git@github.com-{website.name}:{git_url.split("github.com/")[1]}'
+                Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy',
+                                   message=f'Cloning using {command}')
+                os.system(command)
+                if data['repository']['name'] != website.name:
+                    os.system(f'cd {project_root} && mv {data["repository"]["name"]} {website.name}')
             else:
-                os.system(
-                    f'cd {project_path} && git pull git@github.com-{website.name}:{git_url.split("github.com/")[1]}')
+                command = f'cd {project_path} && git pull git@github.com-{website.name}:{git_url.split("github.com/")[1]}'
+                Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy',
+                                   message=f'Pulling using {command}')
+                os.system(command)
 
             if website.framework == Website.CHOICE_DJANGO:
                 deploy_django(website)
