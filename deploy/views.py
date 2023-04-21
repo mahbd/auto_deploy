@@ -26,28 +26,54 @@ def deploy_django(website: Website):
     manage_path = os.path.join(project_path, 'manage.py')
 
     if not os.path.exists(python_path):
-        os.system(f'cd {project_path} && python3 -m venv venv')
-        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
-                           message=f'Venv created')
+        error = os.system(f'cd {project_path} && python3 -m venv venv')
+        if error == 0:
+            Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Venv created')
+        else:
+            Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Venv creation failed. Error code: {error}')
 
     if os.path.exists(requirements_path):
-        os.system(f'cd {project_path} && {pip_path} install -r requirements.txt')
-        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
-                           message=f'Requirements installed')
+        error = os.system(f'cd {project_path} && {pip_path} install -r requirements.txt')
+        if error == 0:
+            Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Requirements installed')
+        else:
+            Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Requirements installation failed. Error code: {error}')
 
     if os.path.exists(manage_path):
-        os.system(f'cd {project_path} && {python_path} manage.py migrate')
-        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
-                           message=f'Migrations applied')
-        os.system(f'cd {project_path} && {python_path} manage.py collectstatic --noinput')
-        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
-                           message=f'Static files collected')
+        error = os.system(f'cd {project_path} && {python_path} manage.py migrate')
+        if error == 0:
+            Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Migrations applied')
+        else:
+            Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Migrations failed. Error code: {error}')
+        error = os.system(f'cd {project_path} && {python_path} manage.py collectstatic --noinput')
+        if error == 0:
+            Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Static files collected')
+        else:
+            Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Static files collection failed. Error code: {error}')
 
     if os.path.exists(service_path):
-        os.system(f'echo ""|sudo -S systemctl daemon-reload')
-        os.system(f'echo ""|sudo -S systemctl restart {website.name}')
-        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
-                           message=f'Service {website.name} restarted')
+        error = os.system(f'echo ""|sudo -S systemctl daemon-reload')
+        if error == 0:
+            Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Service {website.name} reloaded')
+        else:
+            Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Service {website.name} reload failed. Error code: {error}')
+        error = os.system(f'echo ""|sudo -S systemctl restart {website.name}')
+        if error == 0:
+            Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Service {website.name} restarted')
+        else:
+            Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Service {website.name} restart failed. Error code: {error}')
     else:
         service_content = django_service_content(website)
         with open(service_path, 'w+') as f:
