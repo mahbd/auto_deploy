@@ -60,20 +60,22 @@ def deploy_django(website: Website):
                                message=f'Static files collection failed. Error code: {error}')
 
     if os.path.exists(service_path):
-        error = os.system(f'echo ""|sudo -S systemctl daemon-reload')
+        command = f'echo ""|sudo -S systemctl daemon-reload'
+        error = os.system(command)
         if error == 0:
             Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
-                               message=f'Service {website.name} reloaded')
+                               message=f'daemon reloaded')
         else:
             Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='auto_deploy.deploy.views.deploy_django',
-                               message=f'Service {website.name} reload failed. Error code: {error}')
-        error = os.system(f'echo ""|sudo -S systemctl restart {website.name}')
+                               message=f'daemon reload failed. Error code: {error}')
+        command = f'echo ""|sudo -S systemctl restart {website.name}'
+        error = os.system(command)
         if error == 0:
             Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
                                message=f'Service {website.name} restarted')
         else:
             Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='auto_deploy.deploy.views.deploy_django',
-                               message=f'Service {website.name} restart failed. Error code: {error}')
+                               message=f'Service {website.name} restart failed. Error code: {error}. command={command}')
     else:
         service_content = django_service_content(website)
         with open(service_path, 'w+') as f:
