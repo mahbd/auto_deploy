@@ -4,6 +4,7 @@ import os
 from django.http import HttpResponse
 from django.shortcuts import render
 
+from logger.models import Log
 from .models import Website
 from .service_nginx_content import django_service_content, django_nginx_content
 
@@ -29,6 +30,7 @@ def deploy_django(website: Website):
         os.system(f'cd {project_path} && {pip_path} install -r requirements.txt')
 
     if os.path.exists(manage_path):
+        os.system(f'cd {project_path} && {python_path} manage.py migrate')
         os.system(f'cd {project_path} && {python_path} manage.py collectstatic --noinput')
 
     if os.path.exists(service_path):
@@ -53,6 +55,8 @@ def deploy_django(website: Website):
 
 
 def deploy(request):
+    Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy',
+                       message=f'{request.method} request received')
     payload = request.POST
     if payload:
         data = json.loads(payload['payload'])
@@ -63,23 +67,29 @@ def deploy(request):
         elif Website.objects.filter(git_url=html_url).exists():
             website = Website.objects.get(git_url=html_url)
         else:
-            print('Website not found: ', git_url)  # ToDo: Log this
+            Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy',
+                               message=f'Website not found for {git_url}')
             return HttpResponse('Website not found')
         if website.deploy_key:
             project_root = os.path.join(os.path.expanduser("~"), "projects")
             project_path = os.path.join(project_root, website.name)
             if not os.path.exists(project_path):
-                os.system(f'cd {project_root} && git clone git@github.com-{website.name}:{git_url.split("github.com/")[1]}')
+                os.system(
+                    f'cd {project_root} && git clone git@github.com-{website.name}:{git_url.split("github.com/")[1]}')
                 #  ToDo: Rename the folder to website.name
             else:
-                os.system(f'cd {project_path} && git pull git@github.com-{website.name}:{git_url.split("github.com/")[1]}')
+                os.system(
+                    f'cd {project_path} && git pull git@github.com-{website.name}:{git_url.split("github.com/")[1]}')
 
             if website.framework == Website.CHOICE_DJANGO:
                 deploy_django(website)
         else:
-            print('Deploy key not found')  # ToDo: Log this
+            Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy',
+                               message=f'Deploy key not found for {website.name}')
             return HttpResponse('Deploy key not found')
     else:
+        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy',
+                           message=f'No payload')
         print('No payload')
         return HttpResponse('No payload')
     return HttpResponse('Deployed')
