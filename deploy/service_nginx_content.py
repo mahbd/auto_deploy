@@ -31,27 +31,29 @@ WantedBy=multi-user.target
 def django_nginx_content(website: Website):
     home_path = os.path.expanduser('~')
     project_path = os.path.join(home_path, 'projects', website.name)
-    socket_path = os.path.join(home_path, 'run', f'{website.name}.sock')
+    socket_path = os.path.join(home_path, 'run', f'{website.name}.socket')
 
     return f'''server {{
-        listen 80;
-        server_name {website.domain};
-        location = /favicon.ico {{ access_log off; log_not_found off; }}
-        location /static/ {{
-            root {project_path};
-        }}
-        location /media/ {{
-            root {project_path};
-        }}
-        location / {{
-            include proxy_params;
-            proxy_pass http://unix:{socket_path};
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "Upgrade";
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header Host $http_host;
-            proxy_redirect off;
-        }}
+    listen 80;
+    server_name {website.domain};
+    location = /favicon.ico {{ access_log off; log_not_found off; }}
+    location /static/ {{
+        root {project_path};
     }}
-    '''
+    location /media/ {{
+        root {project_path};
+    }}
+    location / {{
+        include proxy_params;
+        proxy_pass http://unix:{socket_path};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+        proxy_headers_hash_max_size 1024;
+        proxy_headers_hash_bucket_size 128;
+    }}
+}}
+'''
