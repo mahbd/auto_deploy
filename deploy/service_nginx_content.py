@@ -50,7 +50,6 @@ def django_nginx_content(website: Website):
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "Upgrade";
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Host $http_host;
         proxy_redirect off;
         proxy_headers_hash_max_size 1024;
         proxy_headers_hash_bucket_size 128;
