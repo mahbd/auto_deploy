@@ -25,9 +25,13 @@ def deploy_django(website: Website):
 
     if not os.path.exists(python_path):
         os.system(f'cd {project_path} && python3 -m venv venv')
+        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                           message=f'Venv created')
 
     if os.path.exists(requirements_path):
         os.system(f'cd {project_path} && {pip_path} install -r requirements.txt')
+        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                           message=f'Requirements installed')
 
     if os.path.exists(manage_path):
         os.system(f'cd {project_path} && {python_path} manage.py migrate')
@@ -36,6 +40,8 @@ def deploy_django(website: Website):
     if os.path.exists(service_path):
         os.system(f'sudo systemctl daemon-reload')
         os.system(f'sudo systemctl restart {website.name}')
+        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                           message=f'Service {website.name} restarted')
     else:
         service_content = django_service_content(website)
         with open(service_path, 'w+') as f:
@@ -43,6 +49,8 @@ def deploy_django(website: Website):
         os.system(f'sudo systemctl daemon-reload')
         os.system(f'sudo systemctl start {website.name}')
         os.system(f'sudo systemctl enable {website.name}')
+        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                           message=f'Service {website.name} started')
 
         if os.path.exists(nginx_path):
             os.system(f'sudo systemctl restart nginx')
