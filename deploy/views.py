@@ -37,31 +37,37 @@ def deploy_django(website: Website):
 
     if os.path.exists(manage_path):
         os.system(f'cd {project_path} && {python_path} manage.py migrate')
+        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                           message=f'Migrations applied')
         os.system(f'cd {project_path} && {python_path} manage.py collectstatic --noinput')
+        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                           message=f'Static files collected')
 
     if os.path.exists(service_path):
-        os.system(f'sudo systemctl daemon-reload')
-        os.system(f'sudo systemctl restart {website.name}')
+        os.system(f'echo ""|sudo -S systemctl daemon-reload')
+        os.system(f'echo ""|sudo -S systemctl restart {website.name}')
         Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
                            message=f'Service {website.name} restarted')
     else:
         service_content = django_service_content(website)
         with open(service_path, 'w+') as f:
             f.write(service_content)
-        os.system(f'sudo systemctl daemon-reload')
-        os.system(f'sudo systemctl start {website.name}')
-        os.system(f'sudo systemctl enable {website.name}')
+        os.system(f'echo ""|sudo -S systemctl daemon-reload')
+        os.system(f'echo ""|sudo -S systemctl start {website.name}')
+        os.system(f'echo ""|sudo -S systemctl enable {website.name}')
         Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
                            message=f'Service {website.name} started')
 
         if os.path.exists(nginx_path):
-            os.system(f'sudo systemctl restart nginx')
+            os.system(f'echo ""|sudo -S systemctl restart nginx')
         else:
             nginx_content = django_nginx_content(website)
             with open(nginx_path, 'w+') as f:
                 f.write(nginx_content)
-            os.system(f'sudo ln -s {nginx_path} /etc/nginx/sites-enabled')
-            os.system(f'sudo systemctl restart nginx')
+            os.system(f'echo ""|sudo -S ln -s {nginx_path} /etc/nginx/sites-enabled')
+            os.system(f'echo ""|sudo -S systemctl restart nginx')
+            Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
+                               message=f'Nginx restarted')
 
 
 def deploy(request):
