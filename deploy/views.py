@@ -15,7 +15,7 @@ def index(request):
 
 def deploy_django(website: Website):
     Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy_django',
-                          message=f'Deploying {website.name} as Django project')
+                       message=f'Deploying {website.name} as Django project')
     service_path = os.path.join('etc', 'systemd', 'system', f'{website.name}.service')
     nginx_path = os.path.join('etc', 'nginx', 'sites-available', f'{website.name}')
     home_path = os.path.expanduser('~')
