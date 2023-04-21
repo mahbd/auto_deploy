@@ -5,7 +5,7 @@ from deploy.models import Website
 
 def django_service_content(website: Website):
     env_text = ""
-    for env in website.environments.all():
+    for env in website.environment_set.all():
         env_text += f'\nEnvironment="{env.key}={env.value}"'
 
     home_path = os.path.expanduser('~')

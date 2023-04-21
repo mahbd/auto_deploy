@@ -1,11 +1,6 @@
 from django.db import models
 
 
-class Environment(models.Model):
-    key = models.CharField(max_length=255)
-    value = models.CharField(max_length=255)
-
-
 class Command(models.Model):
     command = models.CharField(max_length=255)
 
@@ -38,7 +33,6 @@ class Website(models.Model):
     name = models.CharField(max_length=255, unique=True)
     framework = models.CharField(max_length=50, choices=FRAMEWORK_CHOICES)
     git_url = models.URLField()
-    environments = models.ManyToManyField(Environment, blank=True)
     extra_commands = models.ManyToManyField(Command, blank=True)
     is_active = models.BooleanField(default=True)
     certificate = models.DateField(null=True, blank=True)
@@ -58,3 +52,12 @@ class Deploy(models.Model):
 
     class Meta:
         ordering = ('-deploy_time',)
+
+
+class Environment(models.Model):
+    website = models.ForeignKey(Website, on_delete=models.CASCADE)
+    key = models.CharField(max_length=255)
+    value = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f'{self.website.name} {self.key}={self.value}'
