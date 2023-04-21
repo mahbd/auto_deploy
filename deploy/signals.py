@@ -26,7 +26,7 @@ def create_deploy_key_for_new_website(sender, **kwargs):
         config_path = os.path.join(home_path, '.ssh', 'config')
         config_content = ""
         for deploy_key in DeployKey.objects.all():
-            config_content += f'Host github.com-{deploy_key.website.name}\n'
+            config_content += f'Host github.com-{website.name}\n'
             config_content += f'    Hostname github.com\n'
             config_content += f'    IdentityFile={deploy_key.private_path}\n'
 
