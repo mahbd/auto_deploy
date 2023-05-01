@@ -18,6 +18,8 @@ def write_superuser(text, path):
 
 
 def execute_command(command: str) -> bool:
+    Log.objects.create(log_type=Log.LOG_TYPE_COMMAND, location='execute_command',
+                       message=command)
     result = os.popen(command).read()
     if result != '':
         Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='execute_command',

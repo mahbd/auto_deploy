@@ -2,10 +2,12 @@ from django.db import models
 
 
 class Log(models.Model):
+    LOG_TYPE_COMMAND = 'command'
     LOG_TYPE_INFO = 'info'
     LOG_TYPE_ERROR = 'error'
 
     LOG_TYPE = (
+        (LOG_TYPE_COMMAND, 'Command'),
         (LOG_TYPE_INFO, 'Info'),
         (LOG_TYPE_ERROR, 'Error'),
     )
