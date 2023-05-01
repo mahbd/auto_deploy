@@ -3,16 +3,20 @@ import os
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
-from logger.models import Log
-from .models import Website, DeployKey
+from .models import Website, DeployKey, Environment
+from .service_nginx_content import django_service_content
+from .shortcuts import execute_command, write_superuser
 
 
-def execute_command(command: str) -> bool:
-    result = os.popen(command).read()
-    if result != '':
-        Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='execute_command',
-                           message=f'Command "{command}" failed with result: {result}')
-    return True
+def update_ssh_config_file(home_path):
+    config_path = os.path.join(home_path, '.ssh', 'config')
+    config_content = ""
+    for deploy_key in DeployKey.objects.all():
+        config_content += f'Host github.com-{deploy_key.website.name}\n'
+        config_content += f'    Hostname github.com\n'
+        config_content += f'    IdentityFile={deploy_key.private_path}\n'
+    with open(config_path, 'w+') as f:
+        f.write(config_content)
 
 
 @receiver(post_save, sender=Website)
@@ -36,18 +40,28 @@ def create_deploy_key_for_new_website(sender, **kwargs):
         website.deploy_key = deploy_key
         website.save()
 
-        create_config_file(home_path)
+        update_ssh_config_file(home_path)
 
 
-def create_config_file(home_path):
-    config_path = os.path.join(home_path, '.ssh', 'config')
-    config_content = ""
-    for deploy_key in DeployKey.objects.all():
-        config_content += f'Host github.com-{deploy_key.website.name}\n'
-        config_content += f'    Hostname github.com\n'
-        config_content += f'    IdentityFile={deploy_key.private_path}\n'
-    with open(config_path, 'w+') as f:
-        f.write(config_content)
+@receiver(post_delete, sender=Website)
+def clear_disk_for_deleted_website(sender, **kwargs):
+    website: Website = kwargs['instance']
+    service_path = os.path.join('/etc', 'systemd', 'system', f'{website.name}.service')
+    nginx_available_path = os.path.join('/etc', 'nginx', 'sites-available', f'{website.name}')
+    nginx_enabled_path = os.path.join('/etc', 'nginx', 'sites-enabled', f'{website.name}')
+    if os.path.exists(service_path):
+        execute_command(f'sudo systemctl stop {website.name}')
+        execute_command(f'sudo systemctl disable {website.name}')
+        execute_command(f'sudo rm {service_path}')
+
+    if os.path.exists(nginx_available_path):
+        execute_command(f'sudo rm {nginx_available_path}')
+    if os.path.exists(nginx_enabled_path):
+        execute_command(f'sudo rm {nginx_enabled_path}')
+        execute_command(f'sudo systemctl restart nginx')
+    project_path = os.path.join(os.path.expanduser("~"), "projects", website.name)
+    if os.path.exists(project_path):
+        execute_command(f'sudo rm -rf {project_path}')
 
 
 @receiver(post_delete, sender=DeployKey)
@@ -59,4 +73,20 @@ def delete_deploy_key(sender, **kwargs):
         os.remove(deploy_key.private_path)
 
     home_path = os.path.expanduser('~')
-    create_config_file(home_path)
+    update_ssh_config_file(home_path)
+
+
+@receiver(post_save, sender=Environment)
+def update_system_service_after_environment_change(sender, **kwargs):
+    environment: Environment = kwargs['instance']
+    website: Website = environment.website
+    if website.framework == Website.CHOICE_DJANGO:
+        service_path = os.path.join('/etc', 'systemd', 'system', f'{website.name}.service')
+        if os.path.exists(service_path):
+            execute_command(f'sudo systemctl stop {website.name}')
+            execute_command(f'sudo rm {service_path}')
+        service_content = django_service_content(website)
+        write_superuser(service_content, service_path)
+        execute_command(f'sudo systemctl daemon-reload')
+        execute_command(f'sudo systemctl enable {website.name}')
+        execute_command(f'sudo systemctl start {website.name}')
