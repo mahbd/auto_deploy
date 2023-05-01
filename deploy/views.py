@@ -106,7 +106,7 @@ def get_website(request: WSGIRequest) -> Website | None:
     payload = json.loads(payload['payload'])
     ssh_url: str = payload['repository']['ssh_url']
     if Website.objects.filter(ssh_url=ssh_url).exists():
-        return Website.objects.get(git_url=ssh_url)
+        return Website.objects.get(ssh_url=ssh_url)
     Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='get_website',
                        message=f'Website not found for {ssh_url}')
     return None
