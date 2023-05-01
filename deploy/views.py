@@ -105,27 +105,27 @@ def deploy(request):
     if payload:
         data = json.loads(payload['payload'])
         html_url = data['repository']['html_url']
-        git_url: str = data['repository']['git_url']
-        if Website.objects.filter(git_url=git_url).exists():
-            website = Website.objects.get(git_url=git_url)
+        ssh_url: str = data['repository']['ssh_url']
+        if Website.objects.filter(git_url=ssh_url).exists():
+            website = Website.objects.get(git_url=ssh_url)
         elif Website.objects.filter(git_url=html_url).exists():
             website = Website.objects.get(git_url=html_url)
         else:
             Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy',
-                               message=f'Website not found for {git_url}')
+                               message=f'Website not found for {ssh_url}')
             return HttpResponse('Website not found')
         if website.deploy_key:
             project_root = os.path.join(os.path.expanduser("~"), "projects")
             project_path = os.path.join(project_root, website.name)
             if not os.path.exists(project_path):
-                command = f'cd {project_root} && git clone git@github.com-{website.name}:{git_url.split("github.com/")[1]}'
+                command = f'cd {project_root} && git clone git@github.com-{website.name}:{ssh_url.split("github.com/")[1]}'
                 Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy',
                                    message=f'Cloning using {command}')
                 os.system(command)
                 if data['repository']['name'] != website.name:
                     os.system(f'cd {project_root} && mv {data["repository"]["name"]} {website.name}')
             else:
-                command = f'cd {project_path} && git pull git@github.com-{website.name}:{git_url.split("github.com/")[1]}'
+                command = f'cd {project_path} && git pull git@github.com-{website.name}:{ssh_url.split("github.com/")[1]}'
                 Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy',
                                    message=f'Pulling using {command}')
                 os.system(command)
