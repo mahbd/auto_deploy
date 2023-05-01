@@ -1,6 +1,9 @@
+import datetime
+
 from django.contrib import admin
 
 from .models import Website, DeployKey, Deploy, Environment, Command
+from .shortcuts import execute_command
 
 
 class EnvironmentInline(admin.TabularInline):
@@ -15,11 +18,22 @@ class CommandInline(admin.TabularInline):
 
 @admin.register(Website)
 class WebsiteAdmin(admin.ModelAdmin):
+    actions = ('action_generate_certificate',)
+    inlines = (EnvironmentInline, CommandInline)
     list_display = ('name', 'framework', 'domain', 'is_active', 'certificate')
     list_filter = ('framework', 'is_active', 'certificate')
-    search_fields = ('name', 'git_url', 'domain', 'certificate', 'cert_mail')
     readonly_fields = ('deploy_key',)
-    inlines = (EnvironmentInline, CommandInline)
+    search_fields = ('name', 'git_url', 'domain', 'certificate', 'cert_mail')
+
+    def action_generate_certificate(self, request, queryset):
+        for website in queryset:
+            command = f"sudo certbot --non-interactive --redirect --agree-tos --nginx -d {website.domain} -m {website.cert_mail}"
+            execute_command(command)
+            website.certificate = datetime.date.today()
+            website.save()
+        updated = queryset.count()
+        self.message_user(request, f'{updated} website{" was" if updated == 1 else "s were"} certificate updated')
+    action_generate_certificate.short_description = 'Gen/Update Certificate'
 
 
 @admin.register(DeployKey)
