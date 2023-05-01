@@ -6,6 +6,9 @@ class DeployKey(models.Model):
     public_path = models.CharField(max_length=255)
     private_path = models.CharField(max_length=255)
 
+    def __str__(self):
+        return self.public_key
+
 
 class Website(models.Model):
     CHOICE_DJANGO = 'django'
