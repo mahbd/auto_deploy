@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse
@@ -9,6 +10,19 @@ from django.views.decorators.http import require_POST
 from logger.models import Log
 from .models import Website, Deploy
 from .service_nginx_content import django_service_content, django_nginx_content
+
+
+def write_superuser(text, path):
+    command = ['sudo', 'tee', path]
+    with subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as proc:
+        proc.stdin.write(text.encode('utf-8'))
+        proc.stdin.close()
+        proc.wait()
+
+        if proc.returncode != 0:
+            Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='write_superuser',
+                               message=f'Could not write to {path} with error: {proc.stderr.read().decode("utf-8")}')
+            return False
 
 
 def execute_command(command: str) -> bool:
@@ -66,7 +80,8 @@ def deploy_django(website: Website) -> bool:
             return True
 
     service_content = django_service_content(website)
-    execute_command(f'sudo echo "{service_content}" > {service_path}')
+    if not write_superuser(service_content, service_path):
+        return False
     if not execute_command(f'sudo systemctl daemon-reload'):
         return False
     if not execute_command(f'sudo systemctl start {website.name}'):
@@ -83,7 +98,8 @@ def deploy_django(website: Website) -> bool:
             return True
         return False
     nginx_content = django_nginx_content(website)
-    execute_command(f'sudo echo "{nginx_content}" > {nginx_path}')
+    if not write_superuser(nginx_content, nginx_path):
+        return False
     if not execute_command(f'sudo ln -s {nginx_path} /etc/nginx/sites-enabled'):
         return False
     if not execute_command(f'sudo systemctl restart nginx'):
