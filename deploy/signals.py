@@ -12,7 +12,7 @@ def execute_command(command: str) -> bool:
     if result != '':
         Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='execute_command',
                            message=f'Command "{command}" failed with result: {result}')
-    return result == ''
+    return True
 
 
 @receiver(post_save, sender=Website)

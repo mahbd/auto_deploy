@@ -16,7 +16,7 @@ def execute_command(command: str) -> bool:
     if result != '':
         Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='execute_command',
                            message=f'Command "{command}" failed with result: {result}')
-    return result == ''
+    return True
 
 
 def index(request):
@@ -133,12 +133,14 @@ def pull_website(website: Website) -> bool:
 
 @require_POST
 def deploy(request):
-    Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='auto_deploy.deploy.views.deploy',
+    Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='deploy',
                        message=f'{request.method} request received')
     website = get_website(request)
     if not website:
         return HttpResponse('Website not found')
     if not pull_website(website):
+        Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='deploy',
+                           message=f'Pull failed for {website.name}')
         return HttpResponse('Pull failed')
     if website.framework == Website.CHOICE_DJANGO:
         if deploy_django(website):
