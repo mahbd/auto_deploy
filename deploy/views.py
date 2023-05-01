@@ -1,6 +1,5 @@
 import json
 import os
-import subprocess
 
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse
