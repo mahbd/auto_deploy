@@ -57,8 +57,9 @@ def clear_disk_for_deleted_website(sender, **kwargs):
     if os.path.exists(nginx_available_path):
         execute_command(f'sudo rm {nginx_available_path}')
     if os.path.exists(nginx_enabled_path):
+        execute_command(f'sudo systemctl stop nginx')
         execute_command(f'sudo rm {nginx_enabled_path}')
-        execute_command(f'sudo systemctl restart nginx')
+        execute_command(f'sudo systemctl start nginx')
     project_path = os.path.join(os.path.expanduser("~"), "projects", website.name)
     if os.path.exists(project_path):
         execute_command(f'sudo rm -rf {project_path}')
