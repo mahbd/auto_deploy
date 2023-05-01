@@ -68,8 +68,7 @@ def deploy_django(website: Website) -> bool:
             return True
 
     service_content = django_service_content(website)
-    with open(service_path, 'w+') as f:
-        f.write(service_content)
+    execute_command(f'sudo echo "{service_content}" > {service_path}')
     if not execute_command(f'sudo systemctl daemon-reload'):
         return False
     if not execute_command(f'sudo systemctl start {website.name}'):
@@ -86,8 +85,7 @@ def deploy_django(website: Website) -> bool:
             return True
         return False
     nginx_content = django_nginx_content(website)
-    with open(nginx_path, 'w+') as f:
-        f.write(nginx_content)
+    execute_command(f'sudo echo "{nginx_content}" > {nginx_path}')
     if not execute_command(f'sudo ln -s {nginx_path} /etc/nginx/sites-enabled'):
         return False
     if not execute_command(f'sudo systemctl restart nginx'):
