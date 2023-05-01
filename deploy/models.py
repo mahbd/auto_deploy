@@ -1,10 +1,6 @@
 from django.db import models
 
 
-class Command(models.Model):
-    command = models.CharField(max_length=255)
-
-
 class DeployKey(models.Model):
     public_key = models.CharField(max_length=1023)
     public_path = models.CharField(max_length=255)
@@ -32,26 +28,18 @@ class Website(models.Model):
     ]
     name = models.CharField(max_length=255, unique=True)
     framework = models.CharField(max_length=50, choices=FRAMEWORK_CHOICES)
-    git_url = models.URLField()
-    extra_commands = models.ManyToManyField(Command, blank=True)
+    ssh_url = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     certificate = models.DateField(null=True, blank=True)
     cert_mail = models.EmailField(default='mahmudula2000@gmail.com')
-    domain = models.URLField(null=True, blank=True)
-    deploy_key = models.ForeignKey(DeployKey, on_delete=models.CASCADE, null=True, blank=True)
+    domain = models.CharField(max_length=255, null=True, blank=True)
+    deploy_key = models.OneToOneField(DeployKey, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         ordering = ('name',)
 
-
-class Deploy(models.Model):
-    website = models.ForeignKey(Website, on_delete=models.CASCADE)
-    is_success = models.BooleanField()
-    deploy_time = models.DateTimeField(auto_now_add=True)
-    logs = models.TextField()
-
-    class Meta:
-        ordering = ('-deploy_time',)
+    def __str__(self):
+        return self.name
 
 
 class Environment(models.Model):
@@ -59,5 +47,17 @@ class Environment(models.Model):
     key = models.CharField(max_length=255)
     value = models.CharField(max_length=255)
 
-    def __str__(self):
-        return f'{self.website.name} {self.key}={self.value}'
+
+class Command(models.Model):
+    website = models.ForeignKey(Website, on_delete=models.CASCADE)
+    command = models.CharField(max_length=255)
+
+
+class Deploy(models.Model):
+    website = models.ForeignKey(Website, on_delete=models.CASCADE)
+    is_success = models.BooleanField()
+    deploy_time = models.DateTimeField(auto_now_add=True)
+    logs = models.TextField(null=True, blank=True)
+
+    class Meta:
+        ordering = ('-deploy_time',)
