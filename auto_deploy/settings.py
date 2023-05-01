@@ -26,6 +26,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = ['deploy.mahmudul.cf', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['https://deploy.mahmudul.cf']
 
 
 # Application definition
