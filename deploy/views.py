@@ -60,8 +60,6 @@ def deploy_django(website: Website) -> bool:
         return False
 
     if os.path.exists(service_path):
-        if not execute_command('sudo systemctl daemon-reload'):
-            return False
         if execute_command(f'sudo systemctl restart {website.name}'):
             Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='deploy_django',
                                message=f'Service {website.name} restarted')
@@ -142,7 +140,7 @@ def deploy(request):
         return HttpResponse('Pull failed')
     if website.framework == Website.CHOICE_DJANGO:
         if deploy_django(website):
-            Deploy.objects.create(website=website, success=True)
+            Deploy.objects.create(website=website, is_success=True)
         else:
-            Deploy.objects.create(website=website, success=False)
+            Deploy.objects.create(website=website, is_success=False)
     return HttpResponse('Deployed')
