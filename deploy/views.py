@@ -22,7 +22,7 @@ def write_superuser(text, path):
         if proc.returncode != 0:
             Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='write_superuser',
                                message=f'Could not write to {path} with error: {proc.stderr.read().decode("utf-8")}')
-            return False
+    return True
 
 
 def execute_command(command: str) -> bool:
