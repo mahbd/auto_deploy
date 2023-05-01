@@ -77,19 +77,18 @@ def deploy_django(website: Website) -> bool:
         if execute_command(f'sudo systemctl restart {website.name}'):
             Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='deploy_django',
                                message=f'Service {website.name} restarted')
-            return True
-
-    service_content = django_service_content(website)
-    if not write_superuser(service_content, service_path):
-        return False
-    if not execute_command(f'sudo systemctl daemon-reload'):
-        return False
-    if not execute_command(f'sudo systemctl start {website.name}'):
-        return False
-    if not execute_command(f'sudo systemctl enable {website.name}'):
-        return False
-    Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='deploy_django',
-                       message=f'Service {website.name} started')
+    else:
+        service_content = django_service_content(website)
+        if not write_superuser(service_content, service_path):
+            return False
+        if not execute_command(f'sudo systemctl daemon-reload'):
+            return False
+        if not execute_command(f'sudo systemctl start {website.name}'):
+            return False
+        if not execute_command(f'sudo systemctl enable {website.name}'):
+            return False
+        Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='deploy_django',
+                           message=f'Service {website.name} started')
 
     if os.path.exists(nginx_path):
         if execute_command('sudo systemctl restart nginx'):
