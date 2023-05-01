@@ -1,6 +1,6 @@
 import os
 
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 from logger.models import Log
@@ -36,13 +36,27 @@ def create_deploy_key_for_new_website(sender, **kwargs):
         website.deploy_key = deploy_key
         website.save()
 
-        # create config file for GitHub
-        config_path = os.path.join(home_path, '.ssh', 'config')
-        config_content = ""
-        for deploy_key in DeployKey.objects.all():
-            config_content += f'Host github.com-{deploy_key.website.name}\n'
-            config_content += f'    Hostname github.com\n'
-            config_content += f'    IdentityFile={deploy_key.private_path}\n'
+        create_config_file(home_path)
 
-        with open(config_path, 'w+') as f:
-            f.write(config_content)
+
+def create_config_file(home_path):
+    config_path = os.path.join(home_path, '.ssh', 'config')
+    config_content = ""
+    for deploy_key in DeployKey.objects.all():
+        config_content += f'Host github.com-{deploy_key.website.name}\n'
+        config_content += f'    Hostname github.com\n'
+        config_content += f'    IdentityFile={deploy_key.private_path}\n'
+    with open(config_path, 'w+') as f:
+        f.write(config_content)
+
+
+@receiver(post_delete, sender=DeployKey)
+def delete_deploy_key(sender, **kwargs):
+    deploy_key: DeployKey = kwargs['instance']
+    if os.path.exists(deploy_key.public_path):
+        os.remove(deploy_key.public_path)
+    if os.path.exists(deploy_key.private_path):
+        os.remove(deploy_key.private_path)
+
+    home_path = os.path.expanduser('~')
+    create_config_file(home_path)
