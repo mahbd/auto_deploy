@@ -31,7 +31,7 @@ WantedBy=multi-user.target
 def django_nginx_content(website: Website):
     home_path = os.path.expanduser('~')
     project_path = os.path.join(home_path, 'projects', website.name)
-    socket_path = os.path.join(home_path, 'run', f'{website.name}.socket')
+    socket_path = os.path.join(home_path, 'run', f'{website.name}.sock')
 
     return f'''server {{
     listen 80;
