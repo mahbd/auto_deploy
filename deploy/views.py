@@ -30,7 +30,7 @@ def deploy_django(website: Website) -> bool:
     manage_path = os.path.join(project_path, 'manage.py')
 
     if not os.path.exists(python_path):
-        if execute_command(f'cd {project_path} && python3 -m venv venv'):
+        if execute_command(f'cd {project_path} && python3.11 -m venv venv'):
             Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='deploy_django',
                                message=f'Virtual environment created for {website.name}')
         else:
