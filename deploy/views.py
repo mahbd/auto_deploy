@@ -139,6 +139,7 @@ def pull_website(website: Website) -> bool:
         repo_name = full_repo_name.split('/')[-1][:-4]
         if repo_name != website.name:
             return execute_command(f'cd {project_root} && mv {repo_name} {website.name}')
+        return True
     return False
 
 
