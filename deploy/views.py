@@ -42,6 +42,9 @@ def deploy_django(website: Website) -> bool:
     else:
         return False
 
+    #  export all environment variables
+    for env in website.environment_set.all():
+        os.environ[env.key] = env.value
     if execute_command(f'cd {project_path} && {python_path} {manage_path} migrate'):
         Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='deploy_django',
                            message=f'Migrations applied for {website.name}')
