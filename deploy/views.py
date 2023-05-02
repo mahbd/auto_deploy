@@ -42,15 +42,15 @@ def deploy_django(website: Website) -> bool:
     else:
         return False
 
-    #  export all environment variables
+    env_txt = ""
     for env in website.environment_set.all():
-        os.environ[env.key] = env.value
-    if execute_command(f'cd {project_path} && {python_path} {manage_path} migrate'):
+        env_txt += f'export {env.key}="{env.value}" && '
+    if execute_command(f'{env_txt}cd {project_path} && {python_path} {manage_path} migrate'):
         Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='deploy_django',
                            message=f'Migrations applied for {website.name}')
     else:
         return False
-    if execute_command(f'cd {project_path} && {python_path} {manage_path} collectstatic --noinput'):
+    if execute_command(f'{env_txt}cd {project_path} && {python_path} {manage_path} collectstatic --noinput'):
         Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='deploy_django',
                            message=f'Static files collected for {website.name}')
     else:
