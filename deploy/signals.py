@@ -1,4 +1,6 @@
 import os
+import threading
+import time
 
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -8,10 +10,13 @@ from .service_nginx_content import django_service_content
 from .shortcuts import execute_command, write_superuser
 
 
-def update_ssh_config_file(home_path):
+def update_ssh_config_file():
+    time.sleep(5)
+    home_path = os.path.expanduser('~')
     config_path = os.path.join(home_path, '.ssh', 'config')
     config_content = ""
     for deploy_key in DeployKey.objects.all():
+        deploy_key.refresh_from_db()
         config_content += f'Host github.com-{deploy_key.website.name}\n'
         config_content += f'    Hostname github.com\n'
         config_content += f'    IdentityFile={deploy_key.private_path}\n'
@@ -40,7 +45,7 @@ def create_deploy_key_for_new_website(sender, **kwargs):
         website.deploy_key = deploy_key
         website.save()
 
-        update_ssh_config_file(home_path)
+        threading.Thread(target=update_ssh_config_file).start()
 
 
 @receiver(post_delete, sender=Website)
@@ -72,9 +77,7 @@ def delete_deploy_key(sender, **kwargs):
         os.remove(deploy_key.public_path)
     if os.path.exists(deploy_key.private_path):
         os.remove(deploy_key.private_path)
-
-    home_path = os.path.expanduser('~')
-    update_ssh_config_file(home_path)
+    threading.Thread(target=update_ssh_config_file).start()
 
 
 @receiver(post_save, sender=Environment)
