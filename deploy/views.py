@@ -1,5 +1,6 @@
 import json
 import os
+import threading
 
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse
@@ -124,7 +125,10 @@ def pull_website(website: Website) -> bool:
 
 def deploy_now(website: Website):
     if website.framework == Website.CHOICE_DJANGO:
-        return deploy_django(website)
+        if deploy_django(website):
+            Deploy.objects.create(website=website, is_success=True)
+        else:
+            Deploy.objects.create(website=website, is_success=False)
     return False
 
 
@@ -139,9 +143,5 @@ def deploy_request(request):
         Log.objects.create(log_type=Log.LOG_TYPE_ERROR, location='deploy',
                            message=f'Pull failed for {website.name}')
         return HttpResponse('Pull failed')
-    if website.framework == Website.CHOICE_DJANGO:
-        if deploy_django(website):
-            Deploy.objects.create(website=website, is_success=True)
-        else:
-            Deploy.objects.create(website=website, is_success=False)
+    threading.Thread(target=deploy_now, args=(website,)).start()
     return HttpResponse('Deployed')

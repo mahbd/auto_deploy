@@ -1,4 +1,5 @@
 import datetime
+import threading
 
 from django.contrib import admin
 
@@ -39,7 +40,7 @@ class WebsiteAdmin(admin.ModelAdmin):
     def action_deploy_now(self, request, queryset):
         for website in queryset:
             pull_website(website)
-            deploy_now(website)
+            threading.Thread(target=deploy_now, args=(website,)).start()
         updated = queryset.count()
         self.message_user(request, f'{updated} website{" was" if updated == 1 else "s were"} deployed')
     action_deploy_now.short_description = 'Deploy Now'
