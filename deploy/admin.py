@@ -4,6 +4,7 @@ from django.contrib import admin
 
 from .models import Website, DeployKey, Deploy, Environment, Command
 from .shortcuts import execute_command
+from .views import pull_website, deploy_now
 
 
 class EnvironmentInline(admin.TabularInline):
@@ -18,7 +19,7 @@ class CommandInline(admin.TabularInline):
 
 @admin.register(Website)
 class WebsiteAdmin(admin.ModelAdmin):
-    actions = ('action_generate_certificate',)
+    actions = ('action_generate_certificate', 'action_deploy_now')
     inlines = (EnvironmentInline, CommandInline)
     list_display = ('name', 'framework', 'domain', 'is_active', 'certificate')
     list_filter = ('framework', 'is_active', 'certificate')
@@ -34,6 +35,14 @@ class WebsiteAdmin(admin.ModelAdmin):
         updated = queryset.count()
         self.message_user(request, f'{updated} website{" was" if updated == 1 else "s were"} certificate updated')
     action_generate_certificate.short_description = 'Gen/Update Certificate'
+
+    def action_deploy_now(self, request, queryset):
+        for website in queryset:
+            pull_website(website)
+            deploy_now(website)
+        updated = queryset.count()
+        self.message_user(request, f'{updated} website{" was" if updated == 1 else "s were"} deployed')
+    action_deploy_now.short_description = 'Deploy Now'
 
 
 @admin.register(DeployKey)

@@ -122,8 +122,14 @@ def pull_website(website: Website) -> bool:
     return False
 
 
+def deploy_now(website: Website):
+    if website.framework == Website.CHOICE_DJANGO:
+        return deploy_django(website)
+    return False
+
+
 @require_POST
-def deploy(request):
+def deploy_request(request):
     Log.objects.create(log_type=Log.LOG_TYPE_INFO, location='deploy',
                        message=f'{request.method} request received')
     website = get_website(request)

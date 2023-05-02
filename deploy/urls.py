@@ -6,5 +6,5 @@ from . import views
 app_name = 'deploy'
 urlpatterns = [
     path('', views.index, name='index'),
-    path('deploy/', csrf_exempt(views.deploy), name='deploy'),
+    path('deploy/', csrf_exempt(views.deploy_request), name='deploy'),
 ]
