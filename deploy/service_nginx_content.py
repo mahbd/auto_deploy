@@ -9,8 +9,9 @@ def django_service_content(website: Website):
         env_text += f'\nEnvironment="{env.key}={env.value}"'
 
     home_path = os.path.expanduser('~')
+    project_path = os.path.join(home_path, 'projects', website.name)
     socket_path = os.path.join(home_path, 'run', f'{website.name}.sock')
-    daphne_path = os.path.join(home_path, '.local', 'bin', 'daphne')
+    daphne_path = os.path.join(project_path, 'venv', 'bin', 'daphne')
     return f'''[Unit]
 Description={website.name} daphne service
 After=network.target
