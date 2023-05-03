@@ -2,7 +2,7 @@ import os
 import threading
 import time
 
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 
 from .models import Website, DeployKey, Environment
@@ -46,6 +46,20 @@ def create_deploy_key_for_new_website(sender, **kwargs):
         website.save()
 
         threading.Thread(target=update_ssh_config_file).start()
+
+
+@receiver(pre_save, sender=Website)
+def update_nginx_servername_if_changed(sender, **kwargs):
+    website: Website = kwargs['instance']
+    if website.pk:
+        prev_website = Website.objects.get(pk=website.pk)
+        if prev_website.domain != website.domain:
+            nginx_available_path = os.path.join('/etc', 'nginx', 'sites-available', f'{prev_website.name}')
+            if os.path.exists(nginx_available_path):
+                with open(nginx_available_path, 'r') as f:
+                    content = f.read()
+                content = content.replace(prev_website.domain, website.domain)
+                write_superuser(content, nginx_available_path)
 
 
 @receiver(post_delete, sender=Website)
