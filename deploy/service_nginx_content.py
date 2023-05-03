@@ -56,3 +56,16 @@ def django_nginx_content(website: Website):
     }}
 }}
 '''
+
+
+def react_nginx_content(website: Website):
+    return f'''server {{
+    listen 80;
+    server_name {website.domain};
+    root {os.path.join(os.path.expanduser('~'), 'projects', website.name, 'build')};
+    location = /favicon.ico {{ access_log off; log_not_found off; }}
+    location / {{
+        try_files $uri /index.html;
+    }}
+}}
+'''
