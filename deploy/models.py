@@ -17,6 +17,7 @@ class Website(models.Model):
     CHOICE_EXPRESS = 'express'
     CHOICE_REACT = 'react'
     CHOICE_SVELTE = 'svelte'
+    CHOICE_STATIC = 'static'
     CHOICE_DJANGO_REACT = 'django-react'
     CHOICE_DJANGO_SVELTE = 'django-svelte'
     FRAMEWORK_CHOICES = [
@@ -26,6 +27,7 @@ class Website(models.Model):
         (CHOICE_EXPRESS, 'Express'),
         (CHOICE_REACT, 'React'),
         (CHOICE_SVELTE, 'Svelte'),
+        (CHOICE_STATIC, 'Static'),
         (CHOICE_DJANGO_REACT, 'Django-React'),
         (CHOICE_DJANGO_SVELTE, 'Django-Svelte'),
     ]

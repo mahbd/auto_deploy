@@ -9,7 +9,8 @@ from django.views.decorators.http import require_POST
 
 from logger.models import Log
 from .models import Website, Deploy
-from .service_nginx_content import django_service_content, django_nginx_content, react_nginx_content
+from .service_nginx_content import django_service_content, django_nginx_content, react_nginx_content, \
+    static_nginx_content
 from .shortcuts import execute_command, write_superuser
 
 
@@ -141,6 +142,18 @@ def deploy_react(website: Website) -> bool:
     return True
 
 
+def deploy_static(website: Website):
+    nginx_path = os.path.join('/etc', 'nginx', 'sites-available', f'{website.name}')
+    if os.path.exists(nginx_path):
+        return execute_command('sudo systemctl restart nginx')
+    nginx_content = static_nginx_content(website)
+    if not write_superuser(nginx_content, nginx_path):
+        return False
+    execute_command(f'sudo ln -s {nginx_path} /etc/nginx/sites-enabled')
+    execute_command(f'sudo systemctl restart nginx')
+    return True
+
+
 def deploy_now(website: Website):
     if website.framework == Website.CHOICE_DJANGO:
         if deploy_django(website):
@@ -149,6 +162,11 @@ def deploy_now(website: Website):
             Deploy.objects.create(website=website, is_success=False)
     elif website.framework == Website.CHOICE_REACT:
         if deploy_react(website):
+            Deploy.objects.create(website=website, is_success=True)
+        else:
+            Deploy.objects.create(website=website, is_success=False)
+    elif website.framework == Website.CHOICE_STATIC:
+        if deploy_static(website):
             Deploy.objects.create(website=website, is_success=True)
         else:
             Deploy.objects.create(website=website, is_success=False)
